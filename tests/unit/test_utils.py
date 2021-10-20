@@ -83,3 +83,15 @@ class TestGetPyprojectPath:
         result = get_pyproject_path()
 
         assert result is None
+
+    def test_with_given_path(self, create_tmp_file: Callable) -> None:
+        """
+        Given: a `pyproject.toml` file in a path,
+        When: the `get_pyproject_path` function is invoked,
+        Then: the path to the `pyproject.toml` is returned
+        """
+        path_to_pyproject = create_tmp_file(filename="pyproject.toml")
+
+        result = get_pyproject_path(starting_path=path_to_pyproject)
+
+        assert result == path_to_pyproject

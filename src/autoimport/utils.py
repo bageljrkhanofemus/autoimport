@@ -18,15 +18,18 @@ def path_contains_pyproject(path: Path) -> bool:
     return (path / PYPROJECT_FILENAME).is_file()
 
 
-def get_pyproject_path() -> Optional[Path]:
-    """Search for a `pyproject.toml` starting from the `cwd` and traversing up the tree.
+def get_pyproject_path(starting_path: Optional[Path] = None) -> Optional[Path]:
+    """Search for a `pyproject.toml` by traversing up the tree from a path.
+
+    Args:
+        starting_path (Path): an optional path from which to start searching
 
     Returns:
         The `Path` to the `pyproject.toml` if it exists or `None` if it doesn't
     """
-    cwd: Path = Path.cwd()
+    start: Path = starting_path or Path.cwd()
 
-    for path in [cwd, *cwd.parents]:
+    for path in [start, *start.parents]:
         if path_contains_pyproject(path):
             return path / PYPROJECT_FILENAME
 
