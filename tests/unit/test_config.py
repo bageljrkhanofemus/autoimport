@@ -1,7 +1,7 @@
 """Tests for the `Config` classes."""
 
+from pathlib import Path
 from typing import Callable
-from unittest.mock import MagicMock, patch
 
 import toml
 
@@ -49,14 +49,24 @@ class TestConfig:
 
         assert result is None
 
+    def test_given_config_path(self) -> None:
+        """
+        Given: a `Config` instance with a given `config_path`,
+        When: the `config_path` attribute is retrieved,
+        Then: the given `config_path` is returned
+        """
+        config_path = Path("/")
+        config = Config(config_path=config_path)
+
+        result = config.config_path
+
+        assert result is config_path
+
 
 class TestAutoImportConfig:
     """Tests for the `AutoImportConfig`."""
 
-    @patch("autoimport.config.get_pyproject_path")
-    def test_valid_pyproject(
-        self, mock_get_pyproject_path: MagicMock, create_tmp_file: Callable
-    ) -> None:
+    def test_valid_pyproject(self, create_tmp_file: Callable) -> None:
         """
         Given: a valid `pyproject.toml`,
         When: the `AutoImportConfig` class is instantiated,
@@ -64,30 +74,26 @@ class TestAutoImportConfig:
         """
         config_toml = toml.dumps({"tool": {"autoimport": {"foo": "bar"}}})
         pyproject_path = create_tmp_file(content=config_toml, filename="pyproject.toml")
-        mock_get_pyproject_path.return_value = pyproject_path
-        autoimport_config = AutoImportConfig()
+        autoimport_config = AutoImportConfig(starting_path=pyproject_path)
 
         result = autoimport_config.get_option("foo")
 
         assert result == "bar"
 
-    @patch("autoimport.config.get_pyproject_path")
-    def test_no_pyproject(self, mock_get_pyproject_path: MagicMock) -> None:
+    def test_no_pyproject(self) -> None:
         """
         Given: no supplied `pyproject.toml`,
         When: the `AutoImportConfig` class is instantiated,
         Then: the situation is handled gracefully
         """
-        mock_get_pyproject_path.return_value = None
-        autoimport_config = AutoImportConfig()
+        autoimport_config = AutoImportConfig(starting_path=Path("/"))
 
         result = autoimport_config.get_option("foo")
 
         assert result is None
 
-    @patch("autoimport.config.get_pyproject_path")
     def test_valid_pyproject_with_no_autoimport_section(
-        self, mock_get_pyproject_path: MagicMock, create_tmp_file: Callable
+        self, create_tmp_file: Callable
     ) -> None:
         """
         Given: a valid `pyproject.toml`,
@@ -96,8 +102,7 @@ class TestAutoImportConfig:
         """
         config_toml = toml.dumps({"foo": "bar"})
         pyproject_path = create_tmp_file(content=config_toml, filename="pyproject.toml")
-        mock_get_pyproject_path.return_value = pyproject_path
-        autoimport_config = AutoImportConfig()
+        autoimport_config = AutoImportConfig(starting_path=pyproject_path)
 
         result = autoimport_config.get_option("foo")
 

@@ -1,7 +1,7 @@
 """Module to hold the `AutoImportConfig` class definition."""
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import toml
 
@@ -11,9 +11,14 @@ from autoimport.utils import get_pyproject_path
 class Config:
     """Defines the base `Config` and provides accessors to get config values."""
 
-    def __init__(self, config_dict: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self,
+        config_dict: Optional[Dict[str, Any]] = None,
+        config_path: Optional[Path] = None,
+    ) -> None:
         """Initialize the config."""
         self._config_dict: Dict[str, Any] = config_dict or {}
+        self.config_path: Optional[Path] = config_path
 
     def get_option(self, option: str) -> Optional[str]:
         """Return the value of a config option.
@@ -30,19 +35,22 @@ class Config:
 class AutoImportConfig(Config):
     """Defines the autoimport `Config`."""
 
-    def __init__(self) -> None:
+    def __init__(self, starting_path: Optional[Path] = None) -> None:
         """Initialize the config."""
-        self.config_values: Optional[Dict[str, Any]] = _find_config()
-        super().__init__(config_dict=self.config_values)
+        config_path, config_dict = _find_config(starting_path)
+        super().__init__(config_dict=config_dict, config_path=config_path)
 
 
-def _find_config() -> Optional[Dict[str, Any]]:
-    """Search for a config file and return a dict of the values if it exists."""
-    pyproject_path: Optional[Path] = get_pyproject_path()
+def _find_config(
+    starting_path: Optional[Path] = None,
+) -> Tuple[Optional[Path], Dict[str, Any]]:
+    pyproject_path: Optional[Path] = get_pyproject_path(starting_path)
     if pyproject_path:
-        return toml.load(pyproject_path).get("tool", {}).get("autoimport")
+        return pyproject_path, toml.load(pyproject_path).get("tool", {}).get(
+            "autoimport", {}
+        )
 
-    return None
+    return None, {}
 
 
 autoimport_config: AutoImportConfig = AutoImportConfig()
